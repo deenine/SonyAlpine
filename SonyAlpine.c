@@ -14,8 +14,9 @@ bottom	        48800	0.84
 
 /** General Config                                                            **/
 const int sonyPin = A0;
+const int sonyShiftPin = A2;
 const int ledPin = 13;
-const int alpPin = 2;
+const int alpPin = 3;
 const int arrowDelay = 250; //repeat rate for arrow key presses
 const int enterDelay = 350; //repeat rate for enter/esc key presses
 
@@ -56,6 +57,7 @@ void setup() {
 
 /** Main program loop                                                        **/
 void loop() {
+  boolean shift = false;
   float sonyPress = analogRead(sonyPin);
   float voltage = (sonyPress / 1024) * 5.0;
   if (voltage > 0.01) {
@@ -63,7 +65,12 @@ void loop() {
     //take a second reading
     sonyPress = analogRead(sonyPin);
     voltage = (sonyPress / 1024) * 5.0;
-    checkVoltage(int((voltage) * 10));
+    float sonyShiftPress = analogRead(sonyShiftPin);
+    float shiftVoltage = (sonyShiftPress / 1024) * 5.0;
+    if (shiftVoltage > 0.01) {
+      shift = true;
+    }
+    checkVoltage(int((voltage) * 10), shift);
   }
 
   if(headunit == true) 
@@ -72,8 +79,27 @@ void loop() {
     digitalWrite(ledPin,LOW);
 }
 
-void checkVoltage(int voltage) {
-  Serial.print(voltage);
+void checkVoltage(int voltage, boolean shift) {
+  Serial.println(voltage);
+  Serial.println(shift);
+  
+  if (shift) {
+    switch (voltage) {
+      case sonySeekUp:
+        if (headunit)
+          sendCode(alpTrackUp);
+        else
+          sendCode(alpTrackUp);
+        return;
+      case sonySeekDown:
+        if (headunit)
+          sendCode(alpTrackDown);
+        else
+          sendCode(alpTrackDown);
+        return;
+    }
+  }
+  
   switch (voltage) {
     case sonySrc:
       sendCode(alpSource);
